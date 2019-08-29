@@ -1,19 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Persons from './Persons';
 import Filter from './Filter';
 import PersonForm from './PersonForm';
+import Axios from 'axios';
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    { id: 1, name: 'Arto Hellas', number: '040-123456' },
-    { id: 2, name: 'Ada Lovelace', number: '39-44-5323523' },
-    { id: 3, name: 'Dan Abramov', number: '12-43-234345' },
-    { id: 4, name: 'Mary Poppendieck', number: '39-23-6423122' },
-  ]);
+  const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState('');
   const [newNumber, setNewNumber] = useState('');
   const [searchString, setSearchString] = useState('');
   const [showAll, setShowAll] = useState(true);
+
+  useEffect(() => {
+    Axios.get('http://localhost:3001/persons').then(response =>
+      setPersons(response)
+    );
+  }, []);
 
   const personsToShow = showAll
     ? persons
@@ -67,7 +69,7 @@ const App = () => {
       />
 
       <h3>Numbers</h3>
-      
+
       <Persons persons={personsToShow} />
     </div>
   );
