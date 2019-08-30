@@ -3,7 +3,7 @@ import React from 'react'
 const Filter = ({searchString, onChange}) => {
   return (
     <p>
-      filter shown with{' '}
+      <span>filter shown with </span>
       <input value={searchString} onChange={onChange} />
     </p>
   )

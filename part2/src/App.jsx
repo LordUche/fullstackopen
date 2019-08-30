@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Persons from './Persons';
 import Filter from './Filter';
 import PersonForm from './PersonForm';
-import Axios from 'axios';
+import personService from './services/persons';
 
 const App = () => {
   const [persons, setPersons] = useState([]);
@@ -12,9 +12,7 @@ const App = () => {
   const [showAll, setShowAll] = useState(true);
 
   useEffect(() => {
-    Axios.get('http://localhost:3001/persons').then(response =>
-      setPersons(response)
-    );
+    personService.getAll().then(initialPersons => setPersons(initialPersons));
   }, []);
 
   const personsToShow = showAll
@@ -38,18 +36,51 @@ const App = () => {
 
   const handleSubmit = e => {
     e.preventDefault();
-    if (persons.some(person => person.name === newName)) {
-      alert(`${newName} is already added to the phonebook`);
-      return;
-    }
+
     const newPerson = {
-      id: persons.length + 1,
       name: newName,
       number: newNumber,
     };
-    setPersons(persons.concat(newPerson));
-    setNewName('');
-    setNewNumber('');
+
+    if (persons.some(person => person.name === newName)) {
+      if (
+        // eslint-disable-next-line no-restricted-globals
+        confirm(
+          `${newName} is already added to the phonebook, replace the old number with a new one?`
+        )
+      ) {
+        let existingPerson;
+        existingPerson = { ...persons.find(person => person.name === newName) };
+        return personService
+          .update(existingPerson.id, { ...existingPerson, ...newPerson })
+          .then(updatedPerson => {
+            setPersons(
+              persons.map(person =>
+                person.id === updatedPerson.id ? updatedPerson : person
+              )
+            );
+            setNewName('');
+            setNewNumber('');
+          });
+      }
+    }
+    return personService
+      .create({ ...newPerson, id: persons.length + 1 })
+      .then(person => {
+        setPersons(persons.concat(person));
+        setNewName('');
+        setNewNumber('');
+      });
+  };
+
+  const handleDeletePerson = personToDelete => {
+    // eslint-disable-next-line no-restricted-globals
+    if (confirm(`Delete ${personToDelete.name}?`))
+      personService
+        .deletePerson(personToDelete.id)
+        .then(() =>
+          setPersons(persons.filter(person => person.id !== personToDelete.id))
+        );
   };
 
   return (
@@ -70,7 +101,7 @@ const App = () => {
 
       <h3>Numbers</h3>
 
-      <Persons persons={personsToShow} />
+      <Persons persons={personsToShow} onDeletePerson={handleDeletePerson} />
     </div>
   );
 };
