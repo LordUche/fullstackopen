@@ -9,10 +9,7 @@ const WeatherReport = ({ city }) => {
     Axios.get(
       `http://api.apixu.com/v1/current.json?key=${env.REACT_APP_APIXU_KEY}&q=${city}`
     )
-      .then(({ data }) => {
-        console.log(data);
-        setWeather(data);
-      })
+      .then(({ data }) => setWeather(data))
       .catch(error => console.log('Error:', error.message));
   }, [city]);
 
