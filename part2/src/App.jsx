@@ -1,8 +1,10 @@
+/* eslint-disable no-restricted-globals */
 import React, { useState, useEffect } from 'react';
 import Persons from './Persons';
 import Filter from './Filter';
 import PersonForm from './PersonForm';
 import personService from './services/persons';
+import Notification from './Notification';
 
 const App = () => {
   const [persons, setPersons] = useState([]);
@@ -10,6 +12,7 @@ const App = () => {
   const [newNumber, setNewNumber] = useState('');
   const [searchString, setSearchString] = useState('');
   const [showAll, setShowAll] = useState(true);
+  const [message, setMessage] = useState(null);
 
   useEffect(() => {
     personService.getAll().then(initialPersons => setPersons(initialPersons));
@@ -44,7 +47,6 @@ const App = () => {
 
     if (persons.some(person => person.name === newName)) {
       if (
-        // eslint-disable-next-line no-restricted-globals
         confirm(
           `${newName} is already added to the phonebook, replace the old number with a new one?`
         )
@@ -52,7 +54,7 @@ const App = () => {
         let existingPerson;
         existingPerson = { ...persons.find(person => person.name === newName) };
         return personService
-          .update(existingPerson.id, { ...existingPerson, ...newPerson })
+          .update(existingPerson.id, newPerson)
           .then(updatedPerson => {
             setPersons(
               persons.map(person =>
@@ -61,20 +63,33 @@ const App = () => {
             );
             setNewName('');
             setNewNumber('');
+          })
+          .catch(error => {
+            setMessage({
+              text: `Information of ${existingPerson.name} has already been removed from server`,
+              type: 'error',
+            });
+            setTimeout(() => {
+              setMessage(null);
+            }, 5000);
+            setPersons(persons.filter(person => person.name !== newName))
           });
       }
     }
     return personService
-      .create({ ...newPerson, id: persons.length + 1 })
+      .create(newPerson)
       .then(person => {
         setPersons(persons.concat(person));
         setNewName('');
         setNewNumber('');
+        setMessage({ text: `Added ${person.name}`, type: 'success' });
+        setTimeout(() => {
+          setMessage(null);
+        }, 5000);
       });
   };
 
   const handleDeletePerson = personToDelete => {
-    // eslint-disable-next-line no-restricted-globals
     if (confirm(`Delete ${personToDelete.name}?`))
       personService
         .deletePerson(personToDelete.id)
@@ -86,6 +101,8 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+
+      <Notification message={message} />
 
       <Filter searchString={searchString} onChange={handleSearchStringChange} />
 
