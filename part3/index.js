@@ -1,8 +1,11 @@
-require('dotenv/config')
+require('dotenv/config');
 const express = require('express');
 const bodyParser = require('body-parser');
 const logger = require('morgan');
+const cors = require('cors');
+
 const app = express();
+const PORT = process.env.PORT || 3001;
 
 let persons = [
   {
@@ -41,11 +44,13 @@ const unknownEndpoint = (req, res, next) => {
   res.status(404).json({ error: 'unknown endpoint' });
 };
 
+app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-console.log(process.env.NODE_ENV)
 
-if (process.env.NODE_ENV === 'development') app.use(logger('dev'));
+if (process.env.NODE_ENV !== 'production') {
+  app.use(logger('dev'));
+}
 
 app.get('/info', (req, res) => {
   const options = {
@@ -104,4 +109,4 @@ app.delete('/api/persons/:id', (req, res) => {
 
 app.use(unknownEndpoint);
 
-app.listen(3001, () => console.log('Listening on port', 3001));
+app.listen(PORT, () => console.log('Server running on port', PORT));
